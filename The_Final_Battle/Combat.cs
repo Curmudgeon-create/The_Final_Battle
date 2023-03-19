@@ -5,7 +5,6 @@ public class Combat
     public Combat(Group player, Group npc)
     {
         int action = 0;
-        bool turn = true;
         Random rnd = new Random();
         int selection;
         int player_spot = 0;
@@ -17,46 +16,48 @@ public class Combat
             player_spot = 0;
             foreach (Character character in player.player_party)
             {
-                if (turn)
+                GameStatus(player, npc, true, player_spot);
+
+                if (character.AI)
                 {
-                    if (character.AI)
-                    {
-
+                    if (npc.AI_party.Count > 0)
                         Attack(player, player_spot, npc, 0, false);
-                        turn = false;
-                    }
-                    else
+                }
+                else
+                {
+                    selection = ChooseTarget(npc);
+                    action = SelectAction();
+                    switch (action)
                     {
-                        selection = ChooseTarget(npc);
-                        action = SelectAction();
-                        switch (action)
-                        {
-                            case 0:
-                                DoNothing(character);
-                                break;
-                            case 1:
-                                Attack(player, player_spot, npc, selection, false);
-                                break;
-                            default:
-                                break;
+                        case 0:
+                            DoNothing(character);
+                            break;
+                        case 1:
+                            Attack(player, player_spot, npc, selection, false);
+                            break;
+                        default:
+                            break;
 
-                        }
                     }
                 }
-                player_spot++;
-                Console.WriteLine();
-                Thread.Sleep(1000);
+                    player_spot++;
+                    Console.WriteLine();
+                    Thread.Sleep(1000);
+             
             }
+            npc_spot = 0;
             foreach (Character character in npc.AI_party)
             {
+                GameStatus(player, npc, false, player_spot);
                 if (character.AI)
                 {
                     if (player.player_party.Count > 0)
                     {
                         Attack(npc, npc_spot, player, 0, true);
-                        turn = true;
+                      
                     }
                 }
+                npc_spot++;
                 Console.WriteLine();
                 Thread.Sleep(1000);
             }
@@ -118,7 +119,7 @@ public class Combat
 
         }
         Console.WriteLine($"It is {attack.Name}'s turn...");
-        Console.WriteLine($"{attack.Name} used {attack.Attack_String} on {defend.Name}");
+        Console.WriteLine($"{attack.Name} used {attack.Attack.Name} on {defend.Name}");
         damage = DetermineDamage(attack);
         defend.CurrentHP -= damage;
         if (defend.CurrentHP <= 0)
@@ -126,7 +127,7 @@ public class Combat
             defend.CurrentHP = 0;
             dead = true;
         }
-        Console.WriteLine($"{attack.Attack_String} dealt {damage} damage to {defend.Name}.");
+        Console.WriteLine($"{attack.Attack.Name} dealt {damage} damage to {defend.Name}.");
         Console.WriteLine($"{defend.Name} is now at {defend.CurrentHP}/{defend.MaxHP} hp.");
         if (!AI)
             defender.AI_party[defender_spot] = defend;
@@ -147,14 +148,42 @@ public class Combat
     {
         Random rnd = new Random();
         int num = 0;
-        if (character.Random_Hit)
+        if (character.Attack.Ratio<1)
         {
             num = rnd.Next(2);
             if (num == 0)
                 return 0;
             else
-                return character.Attack_Dmg;
+                return character.Attack.Damage;
         }
-        return character.Attack_Dmg;
+        return character.Attack.Damage;
+    }
+
+    public void GameStatus(Group player, Group ai, bool turn, int num)
+    {
+        Console.WriteLine("");
+        Console.WriteLine("============================================= BATTLE ============================================");
+        int count = 0;
+        foreach (Character character in player.player_party)
+        {
+            if ((turn) && (count == num))
+                Console.ForegroundColor=ConsoleColor.Green;
+            Console.WriteLine($"{character.Name}     ( {character.CurrentHP}/{character.MaxHP} )");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            count++;
+        }        
+        Console.WriteLine("---------------------------------------------- VS -----------------------------------------------");
+        count = 0;
+        foreach (Character character in ai.AI_party)
+        {
+            if ((!turn) && (count == num))
+                Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"                                                                             {character.Name}     ( {character.CurrentHP}/{character.MaxHP} )");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            count++;
+        }
+        Console.WriteLine($"=================================================================================================");
+
+        return;
     }
 }

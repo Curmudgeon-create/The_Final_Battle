@@ -10,8 +10,10 @@ public class Game
         string name = Console.ReadLine();
 
         //Add objects directly to Group objects
-        Group playerGroup = new Group(new Character(name, true, false));
+        Group playerGroup = new Group(new Character(name, true, false, Attacks.Punch()));
         Group aiGroup = new Group(Character.Skeleton());
+
+        playerGroup.player_party.Add(new Character("VIN FLETCHER", true, true, Attacks.QuickShot()));
 
         //first encounter
         GameRun(playerGroup, aiGroup);
@@ -49,9 +51,9 @@ public class Game
     }
     public void GameRun(Group player, Group ai)
     {
-        
         new Combat(player, ai);
               
         return;
     }
+
 }
